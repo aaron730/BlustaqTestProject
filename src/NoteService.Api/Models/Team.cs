@@ -2,7 +2,7 @@ namespace NoteService.Api.Models;
 
 public class Team
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
 
     public required string Name { get; set; }
 

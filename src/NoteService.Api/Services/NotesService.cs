@@ -53,7 +53,7 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
         return new PagedResponse<NoteResponse>(page.Select(ToResponse).ToList(), query.Page, query.PageSize, totalCount);
     }
 
-    public async Task<ServiceResult<NoteResponse>> GetAsync(string userId, Guid noteId, CancellationToken cancellationToken)
+    public async Task<ServiceResult<NoteResponse>> GetAsync(string userId, int noteId, CancellationToken cancellationToken)
     {
         var note = await VisibleTo(userId)
             .Include(n => n.Tags)
@@ -74,7 +74,6 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
         var now = timeProvider.GetUtcNow();
         var note = new Note
         {
-            Id = Guid.CreateVersion7(now),
             Title = request.Title.Trim(),
             Content = request.Content ?? string.Empty,
             AuthorId = userId,
@@ -83,7 +82,7 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
             UpdatedAt = now,
             Version = 1,
         };
-        note.Tags.AddRange(TagRules.Normalize(request.Tags).Select(name => new NoteTag { NoteId = note.Id, Name = name }));
+        note.Tags.AddRange(TagRules.Normalize(request.Tags).Select(name => new NoteTag { Name = name }));
 
         db.Notes.Add(note);
         await db.SaveChangesAsync(cancellationToken);
@@ -92,7 +91,7 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
     }
 
     public async Task<ServiceResult<NoteResponse>> UpdateAsync(
-        string userId, Guid noteId, UpdateNoteRequest request, int? expectedVersion, CancellationToken cancellationToken)
+        string userId, int noteId, UpdateNoteRequest request, int? expectedVersion, CancellationToken cancellationToken)
     {
         var note = await VisibleTo(userId)
             .Include(n => n.Tags)
@@ -127,7 +126,7 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
         return ToResponse(note);
     }
 
-    public async Task<ServiceResult> DeleteAsync(string userId, Guid noteId, CancellationToken cancellationToken)
+    public async Task<ServiceResult> DeleteAsync(string userId, int noteId, CancellationToken cancellationToken)
     {
         var note = await VisibleTo(userId).FirstOrDefaultAsync(n => n.Id == noteId, cancellationToken);
 
@@ -153,10 +152,10 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
             (n.TeamId == null && n.AuthorId == userId) ||
             (n.TeamId != null && db.TeamMembers.Any(m => m.TeamId == n.TeamId && m.UserId == userId)));
 
-    private Task<bool> IsMemberAsync(string userId, Guid teamId, CancellationToken cancellationToken) =>
+    private Task<bool> IsMemberAsync(string userId, int teamId, CancellationToken cancellationToken) =>
         db.TeamMembers.AnyAsync(m => m.TeamId == teamId && m.UserId == userId, cancellationToken);
 
-    private async Task<bool> IsOwnerAsync(string userId, Guid? teamId, CancellationToken cancellationToken) =>
+    private async Task<bool> IsOwnerAsync(string userId, int? teamId, CancellationToken cancellationToken) =>
         teamId is not null &&
         await db.TeamMembers.AnyAsync(
             m => m.TeamId == teamId && m.UserId == userId && m.Role == TeamRole.Owner, cancellationToken);

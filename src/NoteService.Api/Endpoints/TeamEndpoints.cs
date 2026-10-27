@@ -19,16 +19,16 @@ public static class TeamEndpoints
 
         group.MapGet("/", ListTeams)
             .WithSummary("List the teams the caller belongs to.");
-        group.MapGet("/{id:guid}", GetTeam)
+        group.MapGet("/{id:int}", GetTeam)
             .WithName(GetTeamRoute)
             .WithSummary("Get a team and its members. Only visible to members.");
         group.MapPost("/", CreateTeam)
             .WithSummary("Create a team. The caller becomes its owner.")
             .ProducesValidationProblem();
-        group.MapPost("/{id:guid}/members", AddMember)
+        group.MapPost("/{id:int}/members", AddMember)
             .WithSummary("Add a member to a team. Owners only.")
             .ProducesValidationProblem();
-        group.MapDelete("/{id:guid}/members/{userId}", RemoveMember)
+        group.MapDelete("/{id:int}/members/{userId}", RemoveMember)
             .WithSummary("Remove a member from a team. Owners can remove anyone; members can remove themselves.");
 
         return group;
@@ -39,7 +39,7 @@ public static class TeamEndpoints
         TypedResults.Ok(await teams.ListAsync(user.GetUserId(), cancellationToken));
 
     private static async Task<Results<Ok<TeamDetailsResponse>, ProblemHttpResult>> GetTeam(
-        Guid id, ClaimsPrincipal user, ITeamsService teams, CancellationToken cancellationToken)
+        int id, ClaimsPrincipal user, ITeamsService teams, CancellationToken cancellationToken)
     {
         var result = await teams.GetAsync(user.GetUserId(), id, cancellationToken);
 
@@ -55,7 +55,7 @@ public static class TeamEndpoints
     }
 
     private static async Task<Results<CreatedAtRoute<TeamMemberResponse>, ProblemHttpResult>> AddMember(
-        Guid id, AddTeamMemberRequest request, ClaimsPrincipal user, ITeamsService teams,
+        int id, AddTeamMemberRequest request, ClaimsPrincipal user, ITeamsService teams,
         CancellationToken cancellationToken)
     {
         var result = await teams.AddMemberAsync(user.GetUserId(), id, request, cancellationToken);
@@ -66,7 +66,7 @@ public static class TeamEndpoints
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> RemoveMember(
-        Guid id, string userId, ClaimsPrincipal user, ITeamsService teams, CancellationToken cancellationToken)
+        int id, string userId, ClaimsPrincipal user, ITeamsService teams, CancellationToken cancellationToken)
     {
         var result = await teams.RemoveMemberAsync(user.GetUserId(), id, userId, cancellationToken);
 

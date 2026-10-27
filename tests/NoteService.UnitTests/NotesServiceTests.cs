@@ -262,9 +262,9 @@ public sealed class NotesServiceTests : IDisposable
     private async Task<NoteResponse> CreatePersonalNoteAsync(string userId) =>
         (await _sut.CreateAsync(userId, new CreateNoteRequest("Title", null, null, null), CancellationToken.None)).Value!;
 
-    private async Task<Guid> SeedTeamAsync(params (string UserId, TeamRole Role)[] members)
+    private async Task<int> SeedTeamAsync(params (string UserId, TeamRole Role)[] members)
     {
-        var team = new Team { Id = Guid.NewGuid(), Name = "Team", CreatedAt = Start };
+        var team = new Team { Name = "Team", CreatedAt = Start };
         team.Members.AddRange(members.Select(m => new TeamMember { UserId = m.UserId, Role = m.Role, JoinedAt = Start }));
 
         await using var seedDb = _database.CreateContext();
