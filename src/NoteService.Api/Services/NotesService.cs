@@ -126,7 +126,8 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
         return ToResponse(note);
     }
 
-    public async Task<ServiceResult> DeleteAsync(string userId, int noteId, CancellationToken cancellationToken)
+    public async Task<ServiceResult> DeleteAsync(
+        string userId, int noteId, int? expectedVersion, CancellationToken cancellationToken)
     {
         var note = await VisibleTo(userId).FirstOrDefaultAsync(n => n.Id == noteId, cancellationToken);
 
@@ -140,8 +141,22 @@ public class NotesService(NoteDbContext db, TimeProvider timeProvider) : INotesS
             return ServiceError.Forbidden;
         }
 
+        if (expectedVersion is { } expected && expected != note.Version)
+        {
+            return ServiceError.PreconditionFailed;
+        }
+
         db.Notes.Remove(note);
-        await db.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // The note was updated between our read and the delete; don't discard an edit the caller hasn't seen.
+            return ServiceError.PreconditionFailed;
+        }
 
         return ServiceResult.Success();
     }

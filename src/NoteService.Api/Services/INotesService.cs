@@ -14,5 +14,6 @@ public interface INotesService
     Task<ServiceResult<NoteResponse>> UpdateAsync(
         string userId, int noteId, UpdateNoteRequest request, int? expectedVersion, CancellationToken cancellationToken);
 
-    Task<ServiceResult> DeleteAsync(string userId, int noteId, CancellationToken cancellationToken);
+    /// <param name="expectedVersion">The version the caller last saw, or null to skip the version check.</param>
+    Task<ServiceResult> DeleteAsync(string userId, int noteId, int? expectedVersion, CancellationToken cancellationToken);
 }
