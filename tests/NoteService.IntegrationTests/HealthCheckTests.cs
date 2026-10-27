@@ -1,10 +1,10 @@
 using System.Net;
 
-using Microsoft.AspNetCore.Mvc.Testing;
+using NoteService.IntegrationTests.Infrastructure;
 
 namespace NoteService.IntegrationTests;
 
-public class HealthCheckTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public class HealthCheckTests(NoteServiceFactory factory) : IClassFixture<NoteServiceFactory>
 {
     [Fact]
     public async Task GetHealth_ServiceRunning_ReturnsOk()
