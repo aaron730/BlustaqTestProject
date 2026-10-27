@@ -44,6 +44,14 @@ public static class ApiTestExtensions
         return await response.ReadAsAsync<NoteResponse>();
     }
 
+    public static Task<HttpResponseMessage> DeleteNoteAsync(this HttpClient client, int noteId, string ifMatch)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Delete, $"/api/notes/{noteId}");
+        message.Headers.TryAddWithoutValidation("If-Match", ifMatch);
+
+        return client.SendAsync(message);
+    }
+
     public static Task<HttpResponseMessage> PutNoteAsync(
         this HttpClient client, int noteId, UpdateNoteRequest request, string? ifMatch)
     {

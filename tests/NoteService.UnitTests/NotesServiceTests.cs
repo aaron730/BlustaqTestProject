@@ -204,7 +204,7 @@ public sealed class NotesServiceTests : IDisposable
         var note = (await _sut.CreateAsync(Bob, new CreateNoteRequest("Bob's", null, teamId, null), CancellationToken.None)).Value!;
 
         // Act
-        var result = await _sut.DeleteAsync(Carol, note.Id, CancellationToken.None);
+        var result = await _sut.DeleteAsync(Carol, note.Id, expectedVersion: null, CancellationToken.None);
 
         // Assert
         Assert.Equal(ServiceError.Forbidden, result.Error);
@@ -218,13 +218,64 @@ public sealed class NotesServiceTests : IDisposable
         var note = (await _sut.CreateAsync(Bob, new CreateNoteRequest("Bob's", null, teamId, ["x"]), CancellationToken.None)).Value!;
 
         // Act
-        var result = await _sut.DeleteAsync(Alice, note.Id, CancellationToken.None);
+        var result = await _sut.DeleteAsync(Alice, note.Id, expectedVersion: null, CancellationToken.None);
 
         // Assert
         Assert.True(result.IsSuccess);
         await using var verifyDb = _database.CreateContext();
         Assert.Empty(verifyDb.Notes);
         Assert.Empty(verifyDb.NoteTags);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithCurrentVersion_DeletesNote()
+    {
+        // Arrange
+        var note = await CreatePersonalNoteAsync(Alice);
+
+        // Act
+        var result = await _sut.DeleteAsync(Alice, note.Id, expectedVersion: 1, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        await using var verifyDb = _database.CreateContext();
+        Assert.Empty(verifyDb.Notes);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithStaleVersion_ReturnsPreconditionFailedAndKeepsNote()
+    {
+        // Arrange
+        var note = await CreatePersonalNoteAsync(Alice);
+        await _sut.UpdateAsync(Alice, note.Id, new UpdateNoteRequest("Edited", null, null), 1, CancellationToken.None);
+
+        // Act
+        var result = await _sut.DeleteAsync(Alice, note.Id, expectedVersion: 1, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ServiceError.PreconditionFailed, result.Error);
+        await using var verifyDb = _database.CreateContext();
+        Assert.Equal("Edited", (await verifyDb.Notes.FindAsync(note.Id))!.Title);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ConcurrentUpdateBetweenReadAndDelete_ReturnsPreconditionFailed()
+    {
+        // Arrange: the delete request has read version 1, then another request updates the note.
+        var note = await CreatePersonalNoteAsync(Alice);
+        await using var otherRequestDb = _database.CreateContext();
+        var otherRequest = new NotesService(otherRequestDb, _time);
+        var stalePreload = await _db.Notes.FindAsync(note.Id);
+        Assert.NotNull(stalePreload);
+        await otherRequest.UpdateAsync(Alice, note.Id, new UpdateNoteRequest("Edited", null, null), 1, CancellationToken.None);
+
+        // Act: no If-Match was sent, but the concurrency token still stops the delete from discarding the edit.
+        var result = await _sut.DeleteAsync(Alice, note.Id, expectedVersion: null, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ServiceError.PreconditionFailed, result.Error);
+        await using var verifyDb = _database.CreateContext();
+        Assert.Equal("Edited", (await verifyDb.Notes.FindAsync(note.Id))!.Title);
     }
 
     [Fact]

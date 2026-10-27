@@ -33,7 +33,9 @@ public static class NoteEndpoints
             .ProducesProblem(StatusCodes.Status412PreconditionFailed)
             .ProducesProblem(StatusCodes.Status428PreconditionRequired);
         group.MapDelete("/{id:int}", DeleteNote)
-            .WithSummary("Delete a note. Allowed for the author and for owners of the note's team.");
+            .WithSummary("Delete a note. Allowed for the author and for owners of the note's team. "
+                + "An optional If-Match header rejects the delete if the note has changed.")
+            .ProducesProblem(StatusCodes.Status412PreconditionFailed);
 
         return group;
     }
@@ -100,9 +102,17 @@ public static class NoteEndpoints
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> DeleteNote(
-        int id, ClaimsPrincipal user, INotesService notes, CancellationToken cancellationToken)
+        int id, [FromHeader(Name = "If-Match")] string? ifMatch, ClaimsPrincipal user, INotesService notes,
+        CancellationToken cancellationToken)
     {
-        var result = await notes.DeleteAsync(user.GetUserId(), id, cancellationToken);
+        // If-Match is optional for deletes; when sent, a stale version is rejected like an update.
+        int? expectedVersion = null;
+        if (!string.IsNullOrWhiteSpace(ifMatch) && !ETags.TryParseIfMatch(ifMatch, out expectedVersion))
+        {
+            return ServiceError.PreconditionFailed.ToProblem(Resource);
+        }
+
+        var result = await notes.DeleteAsync(user.GetUserId(), id, expectedVersion, cancellationToken);
 
         return result.IsSuccess ? TypedResults.NoContent() : result.Error.ToProblem(Resource);
     }

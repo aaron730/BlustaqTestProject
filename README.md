@@ -97,7 +97,9 @@ Every note has a `version` that is also returned as an `ETag` header. `PUT` requ
 - Stale version (someone else saved first): `412 Precondition Failed`. Re-fetch the note and retry.
 - `If-Match: *`: skips the check (last write wins).
 
-The version is also an EF Core concurrency token, so a write that races between the check and the save is still rejected.
+`DELETE` accepts an optional `If-Match`. When it's sent, a stale version returns `412` and the note is kept, so a delete can't remove an edit the caller hasn't seen. Without it, the delete goes ahead.
+
+The version is also an EF Core concurrency token, so an update or delete that races another write between the check and the save is still rejected with `412`, even without `If-Match`.
 
 ## API reference
 
@@ -107,7 +109,7 @@ The version is also an EF Core concurrency token, so a write that races between 
 | GET | `/api/notes/{id}` | Get a note (`ETag` header) | 200 |
 | POST | `/api/notes` | Create a note | 201 + `Location` |
 | PUT | `/api/notes/{id}` | Replace title/content/tags (requires `If-Match`) | 200 |
-| DELETE | `/api/notes/{id}` | Delete a note | 204 |
+| DELETE | `/api/notes/{id}` | Delete a note (optional `If-Match`) | 204 |
 | GET | `/api/teams` | List the caller's teams | 200 |
 | GET | `/api/teams/{id}` | Get a team with its members | 200 |
 | POST | `/api/teams` | Create a team | 201 + `Location` |

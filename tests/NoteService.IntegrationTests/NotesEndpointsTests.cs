@@ -213,5 +213,38 @@ public class NotesEndpointsTests(NoteServiceFactory factory) : IClassFixture<Not
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/notes/{created.Id}")).StatusCode);
     }
 
+    [Fact]
+    public async Task DeleteNote_MatchingIfMatch_ReturnsNoContent()
+    {
+        // Arrange
+        var client = factory.CreateClientFor(NewUserId());
+        var created = await client.CreateNoteAsync();
+
+        // Act
+        var response = await client.DeleteNoteAsync(created.Id, ETagFor(created));
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("\"1\"")]
+    [InlineData("not-an-etag")]
+    public async Task DeleteNote_StaleOrInvalidIfMatch_ReturnsPreconditionFailedAndKeepsNote(string ifMatch)
+    {
+        // Arrange
+        var client = factory.CreateClientFor(NewUserId());
+        var created = await client.CreateNoteAsync("Original");
+        (await client.PutNoteAsync(created.Id, new UpdateNoteRequest("Edited", null, null), ETagFor(created)))
+            .EnsureSuccessStatusCode();
+
+        // Act
+        var response = await client.DeleteNoteAsync(created.Id, ifMatch);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.PreconditionFailed, response.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync($"/api/notes/{created.Id}")).StatusCode);
+    }
+
     private static string ETagFor(NoteResponse note) => $"\"{note.Version}\"";
 }
