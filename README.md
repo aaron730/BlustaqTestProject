@@ -1,3 +1,17 @@
+#Questions
+
+Design Choices:
+
+1. Tech Stack: To meet the deadline, I relied on AI assistance, which led me to choose a familiar technology stack to keep pace with development. I work with .NET on a daily basis; it is robust, well-supported, widely adopted for backend services, and cross-platform. 
+
+2. Dealing with Deletions: Notes use optimistic concurrency so that two teammates editing the same note can't overwrite each other's work. Every note has a version number, sent to clients as an ETag. An update must send that version back in If-Match. A missing header gets 428 and an old version gets 412, prompting the client to handle the state. The design decision was made to give the client application control over handling note merging and conflict resolution rather than merging automatically. Real-time co-editing was out of the scope of my ability in 3 hours.
+
+
+What I would add if I had more time:
+If I had more time I would want to flesh out the Authentication and the actual storage solution more. Currently the auth is just a facade of an auth system, but I wanted it to be there from the start. Auth is something that I could improve on so I would be interested in continuing to expand to get some more practice in. Adding actual storage would have also been interesting, but in memory seemed best for a demonstration project. It would also be fun to try implementing a lightweight front end for this. A lot of the concurrency relies on strong front end controls to handle them.
+
+
+
 # NoteService
 
 A RESTful backend for a shared note-taking application for small teams, built on .NET 10 / ASP.NET Core Minimal APIs and EF Core (SQLite).
