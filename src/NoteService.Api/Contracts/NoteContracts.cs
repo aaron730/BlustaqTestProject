@@ -7,7 +7,7 @@ namespace NoteService.Api.Contracts;
 public record CreateNoteRequest(
     [property: Required, StringLength(NoteDbContext.MaxTitleLength, MinimumLength = 1)] string Title,
     [property: StringLength(NoteDbContext.MaxContentLength)] string? Content,
-    Guid? TeamId,
+    int? TeamId,
     IReadOnlyList<string>? Tags) : IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext) =>
@@ -30,7 +30,7 @@ public record UpdateNoteRequest(
 /// <param name="Page">1-based page number.</param>
 /// <param name="PageSize">Number of notes per page (1-100).</param>
 public record NoteQuery(
-    Guid? TeamId = null,
+    int? TeamId = null,
     [property: StringLength(NoteDbContext.MaxUserIdLength)] string? AuthorId = null,
     [property: StringLength(200)] string? Search = null,
     [property: StringLength(NoteDbContext.MaxTagLength)] string? Tag = null,
@@ -38,11 +38,11 @@ public record NoteQuery(
     [property: Range(1, 100)] int PageSize = 20);
 
 public record NoteResponse(
-    Guid Id,
+    int Id,
     string Title,
     string Content,
     string AuthorId,
-    Guid? TeamId,
+    int? TeamId,
     IReadOnlyList<string> Tags,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,

@@ -37,6 +37,21 @@ public class NotesEndpointsTests(NoteServiceFactory factory) : IClassFixture<Not
     }
 
     [Fact]
+    public async Task CreateNote_Twice_AssignsSequentialIds()
+    {
+        // Arrange
+        var client = factory.CreateClientFor(NewUserId());
+
+        // Act
+        var first = await client.CreateNoteAsync("First");
+        var second = await client.CreateNoteAsync("Second");
+
+        // Assert
+        Assert.True(first.Id > 0);
+        Assert.Equal(first.Id + 1, second.Id);
+    }
+
+    [Fact]
     public async Task CreateNote_MissingTitle_ReturnsValidationProblem()
     {
         // Arrange
@@ -92,7 +107,7 @@ public class NotesEndpointsTests(NoteServiceFactory factory) : IClassFixture<Not
         var client = factory.CreateClientFor(NewUserId());
 
         // Act
-        var response = await client.GetAsync($"/api/notes/{Guid.NewGuid()}");
+        var response = await client.GetAsync("/api/notes/999999");
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);

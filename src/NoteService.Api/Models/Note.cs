@@ -6,7 +6,7 @@ namespace NoteService.Api.Models;
 /// </summary>
 public class Note
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; }
 
     public required string Title { get; set; }
 
@@ -14,7 +14,7 @@ public class Note
 
     public required string AuthorId { get; set; }
 
-    public Guid? TeamId { get; set; }
+    public int? TeamId { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 

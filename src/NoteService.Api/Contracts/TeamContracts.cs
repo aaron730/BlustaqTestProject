@@ -11,8 +11,8 @@ public record CreateTeamRequest(
 public record AddTeamMemberRequest(
     [property: Required, StringLength(NoteDbContext.MaxUserIdLength, MinimumLength = 1)] string UserId);
 
-public record TeamResponse(Guid Id, string Name, DateTimeOffset CreatedAt, TeamRole Role);
+public record TeamResponse(int Id, string Name, DateTimeOffset CreatedAt, TeamRole Role);
 
-public record TeamDetailsResponse(Guid Id, string Name, DateTimeOffset CreatedAt, IReadOnlyList<TeamMemberResponse> Members);
+public record TeamDetailsResponse(int Id, string Name, DateTimeOffset CreatedAt, IReadOnlyList<TeamMemberResponse> Members);
 
 public record TeamMemberResponse(string UserId, TeamRole Role, DateTimeOffset JoinedAt);

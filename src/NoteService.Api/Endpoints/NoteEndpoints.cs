@@ -21,18 +21,18 @@ public static class NoteEndpoints
         group.MapGet("/", ListNotes)
             .WithSummary("List notes visible to the caller, with optional filters and pagination.")
             .ProducesProblem(StatusCodes.Status403Forbidden);
-        group.MapGet("/{id:guid}", GetNote)
+        group.MapGet("/{id:int}", GetNote)
             .WithName(GetNoteRoute)
             .WithSummary("Get a note. The ETag response header carries its version.");
         group.MapPost("/", CreateNote)
             .WithSummary("Create a personal note, or a team note when teamId is set.")
             .ProducesValidationProblem();
-        group.MapPut("/{id:guid}", UpdateNote)
+        group.MapPut("/{id:int}", UpdateNote)
             .WithSummary("Replace a note's title, content and tags. Requires an If-Match header with the note's ETag.")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status412PreconditionFailed)
             .ProducesProblem(StatusCodes.Status428PreconditionRequired);
-        group.MapDelete("/{id:guid}", DeleteNote)
+        group.MapDelete("/{id:int}", DeleteNote)
             .WithSummary("Delete a note. Allowed for the author and for owners of the note's team.");
 
         return group;
@@ -47,7 +47,7 @@ public static class NoteEndpoints
     }
 
     private static async Task<Results<Ok<NoteResponse>, ProblemHttpResult>> GetNote(
-        Guid id, ClaimsPrincipal user, INotesService notes, HttpResponse response, CancellationToken cancellationToken)
+        int id, ClaimsPrincipal user, INotesService notes, HttpResponse response, CancellationToken cancellationToken)
     {
         var result = await notes.GetAsync(user.GetUserId(), id, cancellationToken);
         if (!result.IsSuccess)
@@ -74,7 +74,7 @@ public static class NoteEndpoints
     }
 
     private static async Task<Results<Ok<NoteResponse>, ProblemHttpResult>> UpdateNote(
-        Guid id, UpdateNoteRequest request, [FromHeader(Name = "If-Match")] string? ifMatch, ClaimsPrincipal user,
+        int id, UpdateNoteRequest request, [FromHeader(Name = "If-Match")] string? ifMatch, ClaimsPrincipal user,
         INotesService notes, HttpResponse response, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(ifMatch))
@@ -100,7 +100,7 @@ public static class NoteEndpoints
     }
 
     private static async Task<Results<NoContent, ProblemHttpResult>> DeleteNote(
-        Guid id, ClaimsPrincipal user, INotesService notes, CancellationToken cancellationToken)
+        int id, ClaimsPrincipal user, INotesService notes, CancellationToken cancellationToken)
     {
         var result = await notes.DeleteAsync(user.GetUserId(), id, cancellationToken);
 

@@ -15,7 +15,7 @@ public class TeamsService(NoteDbContext db, TimeProvider timeProvider) : ITeamsS
             .Select(m => new TeamResponse(m.TeamId, m.Team!.Name, m.Team.CreatedAt, m.Role))
             .ToListAsync(cancellationToken);
 
-    public async Task<ServiceResult<TeamDetailsResponse>> GetAsync(string userId, Guid teamId, CancellationToken cancellationToken)
+    public async Task<ServiceResult<TeamDetailsResponse>> GetAsync(string userId, int teamId, CancellationToken cancellationToken)
     {
         var team = await db.Teams
             .Include(t => t.Members)
@@ -39,7 +39,7 @@ public class TeamsService(NoteDbContext db, TimeProvider timeProvider) : ITeamsS
     public async Task<TeamResponse> CreateAsync(string userId, CreateTeamRequest request, CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
-        var team = new Team { Id = Guid.CreateVersion7(now), Name = request.Name.Trim(), CreatedAt = now };
+        var team = new Team { Name = request.Name.Trim(), CreatedAt = now };
         team.Members.Add(new TeamMember { UserId = userId, Role = TeamRole.Owner, JoinedAt = now });
 
         db.Teams.Add(team);
@@ -49,7 +49,7 @@ public class TeamsService(NoteDbContext db, TimeProvider timeProvider) : ITeamsS
     }
 
     public async Task<ServiceResult<TeamMemberResponse>> AddMemberAsync(
-        string userId, Guid teamId, AddTeamMemberRequest request, CancellationToken cancellationToken)
+        string userId, int teamId, AddTeamMemberRequest request, CancellationToken cancellationToken)
     {
         var callerRole = await GetRoleAsync(userId, teamId, cancellationToken);
         if (callerRole is null)
@@ -83,7 +83,7 @@ public class TeamsService(NoteDbContext db, TimeProvider timeProvider) : ITeamsS
 
     /// <summary>Owners can remove anyone; members can only remove themselves (leave the team).</summary>
     public async Task<ServiceResult> RemoveMemberAsync(
-        string userId, Guid teamId, string memberUserId, CancellationToken cancellationToken)
+        string userId, int teamId, string memberUserId, CancellationToken cancellationToken)
     {
         var callerRole = await GetRoleAsync(userId, teamId, cancellationToken);
         if (callerRole is null)
@@ -117,7 +117,7 @@ public class TeamsService(NoteDbContext db, TimeProvider timeProvider) : ITeamsS
         return ServiceResult.Success();
     }
 
-    private async Task<TeamRole?> GetRoleAsync(string userId, Guid teamId, CancellationToken cancellationToken) =>
+    private async Task<TeamRole?> GetRoleAsync(string userId, int teamId, CancellationToken cancellationToken) =>
         await db.TeamMembers
             .Where(m => m.TeamId == teamId && m.UserId == userId)
             .Select(m => (TeamRole?)m.Role)

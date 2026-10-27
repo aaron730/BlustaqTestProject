@@ -29,14 +29,14 @@ public static class ApiTestExtensions
         return await response.ReadAsAsync<TeamResponse>();
     }
 
-    public static async Task AddMemberAsync(this HttpClient client, Guid teamId, string userId)
+    public static async Task AddMemberAsync(this HttpClient client, int teamId, string userId)
     {
         var response = await client.PostAsJsonAsync($"/api/teams/{teamId}/members", new AddTeamMemberRequest(userId));
         response.EnsureSuccessStatusCode();
     }
 
     public static async Task<NoteResponse> CreateNoteAsync(
-        this HttpClient client, string title = "Title", string? content = "Content", Guid? teamId = null,
+        this HttpClient client, string title = "Title", string? content = "Content", int? teamId = null,
         IReadOnlyList<string>? tags = null)
     {
         var response = await client.PostAsJsonAsync("/api/notes", new CreateNoteRequest(title, content, teamId, tags));
@@ -45,7 +45,7 @@ public static class ApiTestExtensions
     }
 
     public static Task<HttpResponseMessage> PutNoteAsync(
-        this HttpClient client, Guid noteId, UpdateNoteRequest request, string? ifMatch)
+        this HttpClient client, int noteId, UpdateNoteRequest request, string? ifMatch)
     {
         var message = new HttpRequestMessage(HttpMethod.Put, $"/api/notes/{noteId}")
         {

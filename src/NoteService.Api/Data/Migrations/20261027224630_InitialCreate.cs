@@ -1,6 +1,4 @@
-﻿using System;
-
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -16,7 +14,8 @@ namespace NoteService.Api.Data.Migrations
                 name: "Teams",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     CreatedAt = table.Column<long>(type: "INTEGER", nullable: false)
                 },
@@ -29,11 +28,12 @@ namespace NoteService.Api.Data.Migrations
                 name: "Notes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Content = table.Column<string>(type: "TEXT", maxLength: 100000, nullable: false),
                     AuthorId = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    TeamId = table.Column<Guid>(type: "TEXT", nullable: true),
+                    TeamId = table.Column<int>(type: "INTEGER", nullable: true),
                     CreatedAt = table.Column<long>(type: "INTEGER", nullable: false),
                     UpdatedAt = table.Column<long>(type: "INTEGER", nullable: false),
                     Version = table.Column<int>(type: "INTEGER", nullable: false)
@@ -53,7 +53,7 @@ namespace NoteService.Api.Data.Migrations
                 name: "TeamMembers",
                 columns: table => new
                 {
-                    TeamId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    TeamId = table.Column<int>(type: "INTEGER", nullable: false),
                     UserId = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Role = table.Column<int>(type: "INTEGER", nullable: false),
                     JoinedAt = table.Column<long>(type: "INTEGER", nullable: false)
@@ -73,7 +73,7 @@ namespace NoteService.Api.Data.Migrations
                 name: "NoteTags",
                 columns: table => new
                 {
-                    NoteId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    NoteId = table.Column<int>(type: "INTEGER", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
